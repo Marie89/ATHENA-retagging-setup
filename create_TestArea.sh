@@ -2,7 +2,7 @@
 
 # ________________________________________________________________________
 function _usage() {
-    echo "usage $0 $1 <branch or trunk> [<test area directory>]"
+    echo "usage $BASH_SOURCE $1 <branch or trunk> [<test area directory>]"
 }
 
 function _help() {
@@ -22,7 +22,7 @@ EOF
 }
 
 # ________________________________________________________________________
-# random functions
+# sanity checks
 _files_exist () {
     files=$(shopt -s nullglob dotglob; echo *)
     if (( ${#files} )) ; then
@@ -32,12 +32,11 @@ _files_exist () {
     fi
 }
 
-# sanity check
 if [ "$1" != "branch" -a "$1" != "trunk" ]; then
     echo "ERROR: You did not decide on using either the branch or the trunk in your setup.\n"
     _usage
     _help
-    exit 1
+    return 1
 fi
 
 # make aliases from your ~/.bashrc available
@@ -69,8 +68,9 @@ fi
 mkdir -p $TestArea_name
 SRC_DIR=$(pwd)  # come back to this directory later
 cd $TestArea_name
-if _files_exist ; then
+if _files_exist $TestArea_name; then
     echo "files exist in $TestArea_name, quitting..."
+    cd $SRC_DIR
     return 1
 fi
 
@@ -85,7 +85,7 @@ if [[ "$1" == "branch" ]]; then
     pkgco.py PileupReweighting-00-03-06
 elif [[ "$1" == "trunk" ]]; then
     asetup 20.7.3.3,AtlasDerivation,gcc48,here,64
-    pkgco.py -A BTagging
+    pkgco.py BTagging-00-07-58
     pkgco.py JetTagTools-01-00-83
     pkgco.py JetMomentTools-00-03-20        # TODO: check if the default version or a more recent one can be used without problems
     pkgco.py PileupReweighting-00-03-06     # TODO: check if the default version or a more recent one can be used without problems
@@ -115,7 +115,7 @@ done
 cp /afs/cern.ch/user/m/malanfer/public/training_files/AGILEPack_b-tagging.weights.json $TestArea/run/.
 # link the job options file
 cd run/
-ln -s $SRC_DIR/jobOptions_Tag.py
+ln -sf $SRC_DIR/jobOptions_Tag.py
 
 # go back to the directory we started in
 cd $SRC_DIR
